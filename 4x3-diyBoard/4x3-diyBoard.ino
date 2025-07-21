@@ -1,206 +1,74 @@
-//Copyright 2024.02 Martin Blieninger
-//origional file
+// Copyright 2024.08 Martin Blieninger
+// Hyperdeck control sketch for Arduino Pro Micro (Leonardo)
+// Maps button presses to specific key commands sent via serial
 
 #include <Keyboard.h>
 #include <Arduino.h>
 
-const int taster_pins[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 14, 15};
-const int num_taster = sizeof(taster_pins) / sizeof(taster_pins[0]);
+// Pin configuration for buttons
+const int buttonPins[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 14, 15};
+const int numButtons = sizeof(buttonPins) / sizeof(buttonPins[0]);
+
+// Function prototypes for better organization
+void handleKeyPress(int keyIndex);
 
 void setup() {
+  // Initialize serial communication
+  Serial.begin(9600);
+  while (!Serial) {
+    ; // Wait for serial port to connect
+  }
+  
+  // Initialize keyboard emulation
   Keyboard.begin();
-
-  for (int i = 0; i < num_taster; i++) {
-    pinMode(taster_pins[i], INPUT_PULLUP);
+  
+  // Configure button pins with internal pull-up resistors
+  for (int i = 0; i < numButtons; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
   }
 }
 
 /*
-  Board Belegung
+  Button Layout
   -------------
-  |09|10|11|12|
+  |09|10|11|12|  <- Key numbers
   |08|07|06|05|
   |04|03|02|01|
   -------------
 */
 
-void funktion1() {
-  
-}
+// Key press handler functions
+void key01() { Serial.println("Key_01"); } // Row 1, Key 1
+void key02() { Serial.println("Key_02"); } // Row 1, Key 2
+void key03() { Serial.println("Key_03"); } // Row 1, Key 3
+void key04() { Serial.println("Key_04"); } // Row 1, Key 4
+void key05() { Serial.println("Key_05"); } // Row 2, Key 1
+void key06() { Serial.println("Key_06"); } // Row 2, Key 2
+void key07() { Serial.println("Key_07"); } // Row 2, Key 3
+void key08() { Serial.println("Key_08"); } // Row 2, Key 4
+void key09() { Serial.println("Key_09"); } // Row 3, Key 1
+void key10() { Serial.println("Key_10"); } // Row 3, Key 2
+void key11() { Serial.println("Key_11"); } // Row 3, Key 3
+void key12() { Serial.println("Key_12"); } // Row 3, Key 4
 
-void funktion2() {
-  // Energiesparmodus
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press('m');
-  delay(80);
-  Keyboard.releaseAll();
-  Keyboard.press(KEY_LEFT_ALT);
-  Keyboard.press(KEY_F4);
-  delay(150);
-  Keyboard.releaseAll();
-  Keyboard.press(KEY_UP_ARROW);
-  delay(100);
-  Keyboard.releaseAll();
-  Keyboard.press(KEY_UP_ARROW);
-  delay(100);
-  Keyboard.releaseAll();
-  Keyboard.press(KEY_RETURN);
-  delay(100);
-  Keyboard.releaseAll();
-}
-
-void funktion3() {
-  // Grafiktreiber neu laden
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press(KEY_LEFT_CTRL);
-  Keyboard.press(KEY_LEFT_SHIFT);
-  Keyboard.press('b');
-  delay(100);
-  Keyboard.releaseAll();
-}
-
-void funktion4() {
-  // Splitscreen
-  Keyboard.press(KEY_LEFT_GUI);
-  delay(20);
-  Keyboard.press(KEY_RIGHT_ARROW);
-  delay(50);
-  Keyboard.releaseAll();
-  delay(900);
-  Keyboard.press(KEY_RETURN);
-  delay(100);
-  Keyboard.releaseAll();
-}
-
-void funktion5() {
-  // Snipping Tool
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press(KEY_LEFT_SHIFT);
-  Keyboard.press('s');
-  delay(100);
-  Keyboard.releaseAll();
-}
-
-void funktion6() {
-  // Screenshot
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press(KEY_PRINT_SCREEN);
-  delay(100);
-  Keyboard.releaseAll();
-}
-
-void funktion7() {
-  // Taskmanager
-  Keyboard.press(KEY_LEFT_CTRL);
-  Keyboard.press(KEY_LEFT_SHIFT);
-  Keyboard.press(KEY_ESC);
-  delay(100);
-  Keyboard.releaseAll();
-}
-
-void funktion8() {
-  // Windows Zwischenablage
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press('v');
-  delay(80);
-  Keyboard.releaseAll();
-}
-
-void funktion9() {
-  // Windows Sperren
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press('l');
-  delay(100);
-  Keyboard.releaseAll();
-}
-
-void funktion10() {
-  // Windows Tab
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press(KEY_TAB);
-  delay(100);
-  Keyboard.releaseAll();
-}
-
-void funktion11() {
-  // Alt Tab
-  Keyboard.press(KEY_LEFT_ALT);
-  Keyboard.press(KEY_TAB);
-  delay(100);
-  Keyboard.release(KEY_TAB);
-  delay(400);
-  Keyboard.releaseAll();
-}
-
-void funktion12() {
-  // Windows Desktop
-  Keyboard.press(KEY_LEFT_GUI);
-  Keyboard.press('d');
-  delay(80);
-  Keyboard.releaseAll();
-}
+// Array of function pointers for key handlers
+void (*keyHandlers[])() = {
+  key12, key11, key10, key09,  // Row 3
+  key08, key07, key06, key05,  // Row 2
+  key01, key02, key03, key04   // Row 1
+};
 
 void loop() {
-  for (int i = 0; i < num_taster; i++) {
-    if (digitalRead(taster_pins[i]) == LOW) {
-      switch (i) {
-        case 0:
-          funktion1();
-          break;
-        case 1:
-          funktion2();
-          break;
-        case 2:
-          funktion3();
-          break;
-
-        case 3:
-          funktion4();
-          break;
+  for (int i = 0; i < numButtons; i++) {
+    if (digitalRead(buttonPins[i]) == LOW) {
+      // Execute the corresponding key handler
+      keyHandlers[i]();
       
-        case 4:
-          funktion5();
-          break;
-
-        case 5:
-          funktion6();
-          break;
-
-        case 6:
-          funktion7();
-          break;
-
-        case 7:
-          funktion8();
-          break;
-
-        case 8:
-          funktion9();
-          break;
-
-        case 9:
-          funktion10();
-          break;
-
-        case 10:
-          funktion11();
-          break;
-
-        case 11:
-          funktion12();
-          break;
-          
-
-        default:
-          break;
-      }
-
-      //debug
-      /*Serial.print("Taster ");
-      Serial.print(taster_pins[i]);
-      Serial.println(" wurde gedrückt.");*/
+      // Debounce: wait for button release
       delay(200);
-      while (digitalRead(taster_pins[i]) == LOW) {}
+      while (digitalRead(buttonPins[i]) == LOW) {
+        ; // Wait until button is released
+      }
     }
   }
 }
